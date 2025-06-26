@@ -1,0 +1,6 @@
+[submodule "manga-web"]
+	path = manga-web
+	url = https://github.com/sang2770/manga-web
+[submodule "manga-backend"]
+	path = manga-backend
+	url = https://github.com/sang2770/manga-backend

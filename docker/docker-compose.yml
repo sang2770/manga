@@ -1,0 +1,37 @@
+version: "3.8"
+services:
+  manga-backend:
+    build:
+      context: ../manga-backend
+    container_name: manga-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - manga-network
+  manga-web:
+    build:
+      context: ../manga-web
+    container_name: manga-web
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://manga-backend:5000
+    depends_on:
+      - manga-backend
+    networks:
+      - manga-network
+  manga-bot:
+    build:
+      context: ../manga-bot
+    container_name: manga-bot
+    ports:
+      - "3001:3001"
+    networks:
+      - manga-network
+
+networks:
+  manga-network:
+    driver: bridge
