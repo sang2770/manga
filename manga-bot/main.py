@@ -5,74 +5,91 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import traceback
 import logging
-import os
+import threading
+import queue
+import time
 
 app = Flask(__name__)
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
 logger = logging.getLogger(__name__)
+
+# === Shared resources ===
+task_queue = queue.Queue()
+result_queue = queue.Queue()
+
+# === Chrome worker thread ===
+def browser_worker():
+    logger.info("Worker: Starting Chrome browser once")
+    options = uc.ChromeOptions()
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_argument("--disable-gpu")
+
+    driver = uc.Chrome(
+        options=options,
+        headless=True,
+        suppress_welcome=True,
+        use_subprocess=True,
+        version_main=137
+    )
+
+    while True:
+        task = task_queue.get()
+        if task is None:  # Exit signal
+            break
+
+        request_id, url = task
+        logger.info(f"Worker: Processing URL: {url}")
+        try:
+            driver.get(url)
+            WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.TAG_NAME, "body"))
+            )
+            html = driver.page_source
+            title = driver.title
+            result_queue.put((request_id, {"title": title, "html": html}))
+        except Exception as e:
+            result_queue.put((request_id, {"error": str(e)}))
+        finally:
+            task_queue.task_done()
+
+    logger.info("Worker: Quitting browser")
+    driver.quit()
+
+# Start background Chrome worker thread
+worker_thread = threading.Thread(target=browser_worker, daemon=True)
+worker_thread.start()
 
 @app.route('/visit', methods=['GET'])
 def visit():
-    try:
-        url = request.args.get('url')
-        logger.info(f"Received /visit request with url: {url}")
-        if not url:
-            logger.warning("Missing URL parameter in request")
-            return jsonify({"error": "Missing URL"}), 400
+    url = request.args.get('url')
+    if not url:
+        return jsonify({"error": "Missing URL"}), 400
 
-        # Chrome Options
-        options = uc.ChromeOptions()
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        options.add_argument("--disable-blink-features=AutomationControlled")
-        options.add_argument("--disable-gpu")
+    request_id = str(time.time()) + threading.current_thread().name
+    logger.info(f"Received /visit request: {url} [{request_id}]")
+    task_queue.put((request_id, url))
 
-        logger.info("Starting undetected_chromedriver")
-        user_data_dir = os.path.join(os.getcwd(), "user-data")
-        if not os.path.exists(user_data_dir):
-                os.makedirs(user_data_dir)
-        options.add_argument(f"--user-data-dir={user_data_dir}")
-        driver = uc.Chrome(
-            options=options,
-            headless=True,
-            suppress_welcome=True,
-            use_subprocess=True,
-            version_main=137
-        )
-        logger.info(f"Navigating to URL: {url}")
-        driver.get(url)
-        # Wait for the page to load completely
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.TAG_NAME, "body"))
-        )
+    # Wait for result (max 15s timeout)
+    start_time = time.time()
+    while time.time() - start_time < 15:
+        try:
+            res_id, result = result_queue.get(timeout=1)
+            if res_id == request_id:
+                return jsonify(result)
+            else:
+                # not mine → requeue it
+                result_queue.put((res_id, result))
+        except queue.Empty:
+            pass
 
-        html = driver.page_source
-        title = driver.title
-
-        driver.quit()
-        logger.info(f"Successfully scraped URL: {url} with title: {title}")
-
-        return jsonify({
-            "title": title,
-            "html": html,
-        })
-
-    except Exception as e:
-        logger.error(f"Error occurred while processing /visit: {e}")
-        logger.debug(traceback.format_exc())
-        return jsonify({"error": str(e)}), 500
-
+    return jsonify({"error": "Timeout while processing request"}), 504
 
 @app.route('/')
 def index():
-    logger.info("Received request for index route")
-    return "Welcome to the Selenium Web Scraper API! Use the /visit endpoint to scrape web pages."
+    return "Welcome to the Fast Chrome Pool Web Scraper!"
 
 if __name__ == '__main__':
-    logger.info("Starting Flask app on 0.0.0.0:3001")
-    app.run(host='0.0.0.0', port=3001)
+    logger.info("Starting Flask app on 0.0.0.0:5003")
+    app.run(host='0.0.0.0', port=5003, threaded=True)
