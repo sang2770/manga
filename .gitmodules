@@ -1,8 +1,8 @@
 [submodule "manga-web"]
 	path = manga-web
 	url = https://github.com/sang2770/manga-web
-	branch = main
+	branch = feature/fake
 [submodule "manga-backend"]
 	path = manga-backend
 	url = https://github.com/sang2770/manga-backend
-	branch = master
+	branch = feature/fake
