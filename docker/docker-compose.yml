@@ -1,37 +1,40 @@
 version: "3.8"
+
 services:
-  manga-backend:
+  frontend:
     build:
-      context: ../manga-backend
+      context: ./manga-web
+      args:
+        NEXT_PUBLIC_API_URL: https://api.truyenchill.click/
+        NEXT_PUBLIC_API_TIMEOUT: 10000
+        NEXT_PUBLIC_GA_ID: G-4QGVF81QVH
+    container_name: manga-frontend
+    ports:
+      - "3001:3000"
+    restart: always
+    networks:
+      - nginx-net
+
+  backend:
+    build:
+      context: ./manga-backend
+
     container_name: manga-backend
     ports:
-      - "5000:5000"
-    environment:
-      - NODE_ENV=production
+      - "3002:3001"
+    restart: always
     networks:
-      - manga-network
-  manga-web:
+      - nginx-net
+
+  bot:
     build:
-      context: ../manga-web
-    container_name: manga-web
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://manga-backend:5000
-    depends_on:
-      - manga-backend
-    networks:
-      - manga-network
-  manga-bot:
-    build:
-      context: ../manga-bot
+      context: ./manga-bot
     container_name: manga-bot
     ports:
-      - "3001:3001"
+      - "5003:5003"
     networks:
-      - manga-network
+      - nginx-net
 
 networks:
-  manga-network:
-    driver: bridge
+  nginx-net:
+    external: true
