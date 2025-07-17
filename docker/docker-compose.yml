@@ -3,7 +3,7 @@ version: "3.8"
 services:
   frontend:
     build:
-      context: ./manga-web
+      context: ../manga-web
       args:
         NEXT_PUBLIC_API_URL: https://api.truyenchill.click/
         NEXT_PUBLIC_API_TIMEOUT: 10000
@@ -17,7 +17,7 @@ services:
 
   backend:
     build:
-      context: ./manga-backend
+      context: ../manga-backend
 
     container_name: manga-backend
     ports:
@@ -28,7 +28,7 @@ services:
 
   bot:
     build:
-      context: ./manga-bot
+      context: ../manga-bot
     container_name: manga-bot
     ports:
       - "5003:5003"
