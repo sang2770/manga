@@ -1,0 +1,17 @@
+version: '3.8' # Specify the Docker Compose file format version
+
+services:
+  db: # Name of your database service
+    image: postgres:16-alpine # Use a specific, stable version and the smaller Alpine image
+    restart: always # Always restart the container if it stops
+    environment:
+      POSTGRES_DB: manga_db  # Name of the database to create
+      POSTGRES_USER: admin # Username for the database
+      POSTGRES_PASSWORD: admin # Password for the database user
+    volumes:
+      - pgdata:/var/lib/postgresql/data # Mount a named volume for data persistence
+    ports:
+      - "5432:5432" # Map host port 5432 to container port 5432
+
+volumes:
+  pgdata: # Define the named volume
