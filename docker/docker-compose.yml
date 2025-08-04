@@ -34,7 +34,7 @@ services:
       DB_HOST: db
       DB_PORT: 5432
       DB_USERNAME: admin
-      DB_PASSWORD: admin
+      DB_PASSWORD: admin123456aA@
       DB_NAME: manga_db
 
       TOR_HOST: tor
