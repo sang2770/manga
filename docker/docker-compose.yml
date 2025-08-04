@@ -8,9 +8,10 @@ services:
         NEXT_PUBLIC_API_URL: https://api.truyenchill.click/
         NEXT_PUBLIC_API_TIMEOUT: 10000
         NEXT_PUBLIC_GA_ID: G-4QGVF81QVH
+
     container_name: manga-frontend
     ports:
-      - "3001:3000"
+      - "3000:3000"
     restart: always
     networks:
       - nginx-net
@@ -18,27 +19,32 @@ services:
   backend:
     build:
       context: ../manga-backend
-      args:
-        JWT_SECRET: 123456aA@Sang1qazXSW@
-        ADMIN_USER: admin
-        ADMIN_PASSWORD: 123456aA@
-        ADMIN_EMAIL: admin@example.com
-        TOR_PASSWORD: mypassword
+    environment:
+      JWT_SECRET: 123456aA@Sang1qazXSW@
+      ADMIN_USER: admin
+      ADMIN_PASSWORD: 123456aA@
+      ADMIN_EMAIL: admin@example.com
+      TOR_PASSWORD: mypassword
 
-        REDIS_HOST: 127.0.0.1
-        REDIS_PORT: 6379
-        REDIS_PASSWORD: ""
-        REDIS_DB: 0
+      REDIS_HOST: redis-db
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ""
+      REDIS_DB: 0
 
-        DB_HOST: localhost
-        DB_PORT: 5432
-        DB_USERNAME: admin
-        DB_PASSWORD: admin
-        DB_NAME: manga_db
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USERNAME: admin
+      DB_PASSWORD: admin
+      DB_NAME: manga_db
+
+      TOR_HOST: tor
+      TOR_PORT: 9050
+      TOR_CONTROL_PORT: 9051
+      TOR_CONTROL_PASSWORD: mypassword
 
     container_name: manga-backend
     ports:
-      - "3002:3001"
+      - "3001:3001"
     restart: always
     networks:
       - nginx-net
@@ -52,16 +58,30 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data # Mount a named volume for data persistence
     ports:
-      - "5432:5432" # Map host port 5432 to container port 5432
-  redis:
+      - "5433:5432" # Map host port 5432 to container port 5432
+    networks:
+      - nginx-net # Connect to the nginx network
+  redis-db:
     image: redis:7.2
-    container_name: redis
+    container_name: redis-db
     restart: unless-stopped
     ports:
       - "6379:6379"
     volumes:
       - redis-data:/data
     command: ["redis-server", "--appendonly", "yes"]
+    networks:
+      - nginx-net
+  tor:
+    image: dperson/torproxy:latest
+    container_name: tor
+    restart: unless-stopped
+    ports:
+      - "9050:9050"
+      - "9051:9051"
+    command: -p "mypassword"
+    networks:
+      - nginx-net
 
 volumes:
   pgdata:
