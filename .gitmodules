@@ -5,4 +5,4 @@
 [submodule "manga-backend"]
 	path = manga-backend
 	url = https://github.com/sang2770/manga-backend
-	branch = master
+	branch = feature/user

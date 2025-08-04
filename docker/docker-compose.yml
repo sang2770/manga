@@ -28,7 +28,7 @@ services:
 
       REDIS_HOST: redis-db
       REDIS_PORT: 6379
-      REDIS_PASSWORD: ""
+      REDIS_PASSWORD: 123456aA@1
       REDIS_DB: 0
 
       DB_HOST: db
@@ -54,7 +54,7 @@ services:
     environment:
       POSTGRES_DB: manga_db # Name of the database to create
       POSTGRES_USER: admin # Username for the database
-      POSTGRES_PASSWORD: admin # Password for the database user
+      POSTGRES_PASSWORD: admin123456aA@ # Password for the database user
     volumes:
       - pgdata:/var/lib/postgresql/data # Mount a named volume for data persistence
     ports:
@@ -67,9 +67,12 @@ services:
     restart: unless-stopped
     ports:
       - "6379:6379"
+    environment:
+      - REDIS_PASSWORD=123456aA@1
     volumes:
       - redis-data:/data
-    command: ["redis-server", "--appendonly", "yes"]
+    command:
+      ["redis-server", "--appendonly", "yes", "--requirepass", "123456aA@1"]
     networks:
       - nginx-net
   tor:
