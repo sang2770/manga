@@ -1,17 +1,26 @@
-version: '3.8' # Specify the Docker Compose file format version
+version: "3.8" # Specify the Docker Compose file format version
 
 services:
   db: # Name of your database service
     image: postgres:16-alpine # Use a specific, stable version and the smaller Alpine image
     restart: always # Always restart the container if it stops
     environment:
-      POSTGRES_DB: manga_db  # Name of the database to create
+      POSTGRES_DB: manga_db # Name of the database to create
       POSTGRES_USER: admin # Username for the database
       POSTGRES_PASSWORD: admin # Password for the database user
     volumes:
       - pgdata:/var/lib/postgresql/data # Mount a named volume for data persistence
     ports:
       - "5432:5432" # Map host port 5432 to container port 5432
-
+  redis:
+    image: redis:7.2
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: ["redis-server", "--appendonly", "yes"]
 volumes:
   pgdata: # Define the named volume
+  redis-data: # Define the named volume for Redis
