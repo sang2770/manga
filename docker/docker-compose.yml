@@ -18,6 +18,23 @@ services:
   backend:
     build:
       context: ../manga-backend
+      args:
+        JWT_SECRET: 123456aA@Sang1qazXSW@
+        ADMIN_USER: admin
+        ADMIN_PASSWORD: 123456aA@
+        ADMIN_EMAIL: admin@example.com
+        TOR_PASSWORD: mypassword
+
+        REDIS_HOST: 127.0.0.1
+        REDIS_PORT: 6379
+        REDIS_PASSWORD: ""
+        REDIS_DB: 0
+
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DB_USERNAME: admin
+        DB_PASSWORD: admin
+        DB_NAME: manga_db
 
     container_name: manga-backend
     ports:
