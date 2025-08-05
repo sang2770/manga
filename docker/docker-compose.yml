@@ -42,12 +42,18 @@ services:
       TOR_CONTROL_PORT: 9051
       TOR_CONTROL_PASSWORD: mypassword
 
+      COOKIE_DOMAIN: .truyenchill.click
+
     container_name: manga-backend
     ports:
       - "3001:3001"
     restart: always
     networks:
       - nginx-net
+    depends_on:
+      - db
+      - redis-db
+      - tor
   db: # Name of your database service
     image: postgres:16-alpine # Use a specific, stable version and the smaller Alpine image
     restart: always # Always restart the container if it stops
